@@ -117,7 +117,7 @@ class PretrainedTransformerEmbedderMLM(PretrainedTransformerEmbedder):
             for param in self.transformer_model.parameters():
                 param.requires_grad = False
 
-    @overrides
+    # @overrides
     def forward(
         self,
         token_ids: torch.LongTensor,

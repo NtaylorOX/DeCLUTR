@@ -23,14 +23,14 @@ def _write_output_to_disk(text: List[str], output_filepath: Path) -> None:
     output_filepath = Path(output_filepath)
     output_filepath.parents[0].mkdir(parents=True, exist_ok=True)
 
-    with open(output_filepath, "w") as f:
+    with open(output_filepath, "w", encoding = 'utf-8') as f:
         # TODO (John): In the future, it might make sense to both batch and shard:
         # 1) Batch, meaning write batches of documents to a file as opposed to 1 at a time
         # 2) Shard, meaning break a file up into shard_size // len(text) files, and return a
         #    directory instead. Loading a dataset like this is supported in AllenNLP (see:
         #    https://docs.allennlp.org/master/api/data/dataset_readers/sharded_dataset_reader/)
         with typer.progressbar(text, label="Writing to disk") as progress:
-            for doc in progress:
+            for doc in progress:                
                 f.write(doc.strip() + "\n")
     typer.secho(
         f"{SAVING} {len(text)} preprocessed documents saved to: {output_filepath}",

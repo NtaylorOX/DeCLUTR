@@ -17,9 +17,13 @@ from declutr.common.util import sanitize_text
 logger = logging.getLogger(__name__)
 
 
+
+
 @DatasetReader.register("declutr")
 class DeCLUTRDatasetReader(DatasetReader):
     """
+    IMPORTANT - allennlp 2.0 has breaking changes, see: https://github.com/allenai/allennlp/discussions/4933
+    
     Read a text file containing one instance per line, and create a dataset suitable for a
     `DeCLUTR` model.
 
@@ -118,7 +122,7 @@ class DeCLUTRDatasetReader(DatasetReader):
         yield
         self.sample_spans = prev
 
-    @overrides
+    # @overrides
     def _read(self, file_path: str) -> Iterable[Instance]:
         # if `file_path` is a URL, redirect to the cache
         file_path = cached_path(file_path)
@@ -138,10 +142,12 @@ class DeCLUTRDatasetReader(DatasetReader):
             else:
                 data = enumerate(data_file)
 
-            for _, text in data:
+            for _, text in self.shard_iterable(data): # upgrade  to allennlp 2.0
                 yield self.text_to_instance(text)
+            # for _, text in data:
+            #     yield self.text_to_instance(text)
 
-    @overrides
+    # @overrides
     def text_to_instance(self, text: str) -> Instance:  # type: ignore
         """
         # Parameters
@@ -203,7 +209,8 @@ class DeCLUTRDatasetReader(DatasetReader):
                     self._tokenizer.tokenizer.convert_tokens_to_ids(span.split())
                 )
                 tokens = self._tokenizer.tokenize(anchor_text)
-                anchors.append(TextField(tokens, self._token_indexers))
+                # anchors.append(TextField(tokens, self._token_indexers)) # allennlp v1.x
+                anchors.append(TextField(tokens)) # allennlp v2.x
             fields["anchors"] = ListField(anchors)
             positives: List[Field] = []
             for span in positive_spans:
@@ -211,9 +218,17 @@ class DeCLUTRDatasetReader(DatasetReader):
                     self._tokenizer.tokenizer.convert_tokens_to_ids(span.split())
                 )
                 tokens = self._tokenizer.tokenize(positive_text)
-                positives.append(TextField(tokens, self._token_indexers))
+                # positives.append(TextField(tokens,self._token_indexers))# allennlp v1.x
+                positives.append(TextField(tokens))
             fields["positives"] = ListField(positives)
         else:
             tokens = self._tokenizer.tokenize(text)
-            fields["anchors"] = TextField(tokens, self._token_indexers)
+            # fields["anchors"] = TextField(tokens, self._token_indexers) # allennlp v1.x
+            fields["anchors"] = TextField(tokens)
         return Instance(fields)
+    
+    # this would be needed for v2.0
+    def apply_token_indexers(self, instance: Instance) -> None:
+        
+        instance.fields["anchors"].token_indexers = self._token_indexers
+        instance.fields["positives"].token_indexers = self._token_indexers
