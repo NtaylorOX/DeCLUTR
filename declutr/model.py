@@ -164,6 +164,7 @@ class DeCLUTR(Model):
                 embeddings, labels = self._loss.get_embeddings_and_labels(
                     embedded_anchors, embedded_positives
                 )
+                print(f"embeddings shape after getting embeds and labels: {embeddings.shape} and labels:{labels} with shape: {labels.shape}")
                 indices_tuple = self._miner(embeddings, labels) if self._miner is not None else None
                 contrastive_loss = self._loss(embeddings, labels, indices_tuple)
                 # Loss needs to be scaled by world size when using DistributedDataParallel
