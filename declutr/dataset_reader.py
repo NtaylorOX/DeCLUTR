@@ -127,7 +127,7 @@ class DeCLUTRDatasetReader(DatasetReader):
         # if `file_path` is a URL, redirect to the cache
         file_path = cached_path(file_path)
 
-        with open(file_path, "r") as data_file:
+        with open(file_path, "r", encoding = "utf-8") as data_file:
             logger.info("Reading instances from lines in file at: %s", file_path)
 
             # If we are sampling spans (i.e. we are training) we need to shuffle the data so that
