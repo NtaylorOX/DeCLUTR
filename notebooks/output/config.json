@@ -35,7 +35,7 @@
             }
         }
     },
-    "train_data_path": "E:/wiki_text/wikitext-103/train.txt",
+    "train_data_path": "/mnt/sdg/niallt/wiki_text/wikitext-103/train.txt",
     "trainer": {
         "checkpointer": {
             "num_serialized_models_to_keep": -1

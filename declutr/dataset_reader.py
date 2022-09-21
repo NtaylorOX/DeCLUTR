@@ -72,6 +72,8 @@ class DeCLUTRDatasetReader(DatasetReader):
         super().__init__(**kwargs)
         self._tokenizer = tokenizer or SpacyTokenizer()
         self._token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
+        self.manual_distributed_sharding = True
+        self.manual_multiprocess_sharding = True
 
         # If the user provided us with a number of anchors to sample, we automatically
         # check that the other expected values are provided and valid.
@@ -142,10 +144,10 @@ class DeCLUTRDatasetReader(DatasetReader):
             else:
                 data = enumerate(data_file)
 
-            # for _, text in self.shard_iterable(data): # upgrade  to allennlp 2.0
-            #     yield self.text_to_instance(text)
-            for _, text in data:
+            for _, text in self.shard_iterable(data): # upgrade  to allennlp 2.0
                 yield self.text_to_instance(text)
+            # for _, text in data:
+            #     yield self.text_to_instance(text)
 
     # @overrides
     def text_to_instance(self, text: str) -> Instance:  # type: ignore

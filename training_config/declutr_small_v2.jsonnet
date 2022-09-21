@@ -75,7 +75,7 @@ local min_length = 32;
         "num_epochs": 1,
         "checkpointer": {
             // A value of null or -1 will save the weights of the model at the end of every epoch
-            "num_serialized_models_to_keep": -1,
+            "keep_most_recent_by_count": 1,
         },
         "grad_norm": 1.0,
         "learning_rate_scheduler": {
