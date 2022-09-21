@@ -4,6 +4,7 @@ import typer
 from allennlp.common import util as common_util
 from allennlp.models.archival import load_archive
 from allennlp.predictors import Predictor
+import argparse
 
 # Emoji's used in typer.secho calls
 # See: https://github.com/carpedm20/emoji/blob/master/emoji/unicode_codes.py"
@@ -44,4 +45,23 @@ def main(archive_file: str, save_directory: Path) -> None:
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    # typer.run(main)
+    parser = argparse.ArgumentParser()
+
+    # Required parameters
+    parser.add_argument("--archive_file",
+                        default = "E:/saved_models/declutr/wiki/output/",
+                        type=str,
+                        help = "The data path to the file containing the saved model etc")
+    
+    parser.add_argument("--save_directory",
+                        default = "E:/saved_models/declutr/wiki/output/transformer_format/",
+                        type=str,
+                        help = "The data path to the file containing the saved model etc")
+    
+    
+    # create args object
+    args = parser.parse_args()
+    
+    # now run
+    main(archive_file=args.archive_file, save_directory=args.save_directory)
