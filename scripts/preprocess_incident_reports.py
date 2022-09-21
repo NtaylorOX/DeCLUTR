@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import io
 import re
+import os
 import zipfile
 from pathlib import Path
 from typing import List, Optional
@@ -10,9 +11,6 @@ import typer
 from declutr.common.util import sanitize_text
 
 import argparse
-
-WIKITEXT_103_URL = "https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-103-raw-v1.zip"
-
 # Emoji's used in typer.secho calls
 # See: https://github.com/carpedm20/emoji/blob/master/emoji/unicode_codes.py"
 SAVING = "\U0001F4BE"
@@ -41,6 +39,7 @@ def _write_output_to_disk(text: List[str], output_filepath: Path) -> None:
 
 
 def main(
+    input_filepath: Path,
     output_filepath: Path,
     segment_sentences: bool = False,
     lowercase: bool = False,
@@ -48,7 +47,7 @@ def main(
     max_instances: Optional[int] = None,
     pretrained_model_name_or_path: Optional[str] = None,
 ) -> None:
-    """Downloads and lightly preprocesses WikiText-103. If `min_length is not None`, only documents
+    """Lightly preprocess the text dataset. If `min_length is not None`, only documents
     with at least this many tokens are retained. If `pretrained_model_name_or_path` is not None, the
     tokenizer will be loaded as `AutoTokenizer.from_pretrained(pretrained_model_name_or_path)`
     using the HuggingFace Transformers library. Otherwise `str.split()` is used. This argument has
@@ -75,20 +74,23 @@ def main(
 
         nlp = spacy.load("en_core_web_sm", disable=["ner"])
 
-    # Download WikiText-103
-    r = requests.get(WIKITEXT_103_URL, stream=True)
-    z = zipfile.ZipFile(io.BytesIO(r.content))
-    partition_filenames = z.namelist()[1:]
-    typer.secho(f"{DOWNLOAD} Downloaded WikiText-103", bold=True)    
+    # # Download WikiText-103
+    # r = requests.get(WIKITEXT_103_URL, stream=True)
+    # z = zipfile.ZipFile(io.BytesIO(r.content))
+    # partition_filenames = z.namelist()[1:]
+    # typer.secho(f"{DOWNLOAD} Downloaded WikiText-103", bold=True)    
+ 
+
     preprocessed_documents: List[str] = []
-    for filename in partition_filenames:
-        text = z.open(filename).read().decode("utf-8")
+    
+    # load in the one big training file
+    with open(input_filepath, 'r') as f: 
+        text = f.readlines()
 
+       
         # Strip out subtitles and split the text into documents
-        no_subtitles = re.sub(r"(=\s){2,5}.*(=\s){2,5}", "", text)
-        documents = re.split(r"=\s.*\s=", no_subtitles)        
-   
-
+        documents = text
+        
         if segment_sentences:
             documents = (sent.text for doc in documents for sent in nlp(doc).sents)  # type: ignore
 
@@ -96,14 +98,18 @@ def main(
             documents, length=max_instances, label=typer.style("Preprocessing text", bold=True)
         ) as progress:
             for doc in progress:
-                doc = sanitize_text(doc, lowercase=lowercase)  
+                doc = sanitize_text(doc, lowercase=lowercase)
+                # print(f"Doc processed is: {doc}")
                 if not doc:
                     continue
 
                 # Retain documents if the length of their shortest document is
                 # equal to or greater than the minimum specified length
                 if tokenizer is not None:
-                    num_tokens = len(tokenizer(doc))  
+                    num_tokens = len(tokenizer(doc))
+                    # print(f"num tokens:{num_tokens}")
+                    
+                
                     if min_length and num_tokens < min_length:
                         continue
 
@@ -114,11 +120,8 @@ def main(
 
     _write_output_to_disk(preprocessed_documents, output_filepath)
 
-
-# if __name__ == "__main__":
-#     typer.run(main)
-
-
+    # ensure file close
+    f.close()
 
 if __name__ == "__main__":
     
@@ -164,7 +167,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # now run
-    main( output_filepath = args.save_directory,
+    main(input_filepath=args.input_filepath,
+            output_filepath = args.save_directory,
             segment_sentences= args.segment_sentences,
             min_length = args.min_length,
             max_instances= args.max_instances,

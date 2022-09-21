@@ -21,6 +21,7 @@ def unpack_batch(tokens: TextFieldTensors) -> TextFieldTensors:
         Containing the (possibly) reshaped tensors.
     """
     for name, tensor in tokens["tokens"].items():
+        # print(f" Name: {name} and Shape of tensor before unpack:{tensor.shape}")
         if len(tensor.size()) == 3:
             tokens["tokens"][name] = tensor.reshape(tensor.size(0) * tensor.size(1), tensor.size(2))
     return tokens

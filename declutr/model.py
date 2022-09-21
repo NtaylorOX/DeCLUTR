@@ -123,10 +123,14 @@ class DeCLUTR(Model):
         loss : torch.FloatTensor, optional
             A scalar loss to be optimized.
         """
-        output_dict: Dict[str, torch.Tensor] = {}
+        output_dict: Dict[str, torch.Tensor] = {}        
+        
+        # # below is just to understand shapes of tensors etc
+        # for name, tensor in anchors["tokens"].items():
+        #     print(f" Name: {name} and Shape of tensor before unpack:{tensor.shape}")
 
         # If multiple anchors were sampled, we need to unpack them.
-        anchors = unpack_batch(anchors)
+        anchors = unpack_batch(anchors)       
         # Mask anchor input ids and get labels required for MLM.
         if self.training and self._masked_language_modeling:
             anchors = mask_tokens(anchors, self._tokenizer)
@@ -164,7 +168,7 @@ class DeCLUTR(Model):
                 embeddings, labels = self._loss.get_embeddings_and_labels(
                     embedded_anchors, embedded_positives
                 )
-                print(f"embeddings shape after getting embeds and labels: {embeddings.shape} and labels:{labels} with shape: {labels.shape}")
+                # print(f"embeddings shape after getting embeds and labels: {embeddings.shape} and labels:{labels} with shape: {labels.shape}")
                 indices_tuple = self._miner(embeddings, labels) if self._miner is not None else None
                 contrastive_loss = self._loss(embeddings, labels, indices_tuple)
                 # Loss needs to be scaled by world size when using DistributedDataParallel
