@@ -127,8 +127,10 @@ class DeCLUTR(Model):
         
         # # below is just to understand shapes of tensors etc
         # for name, tensor in anchors["tokens"].items():
-        #     print(f" Name: {name} and Shape of tensor before unpack:{tensor.shape}")
+        #     print(f"anchors  Name: {name} and Shape of tensor before unpack:{tensor.shape}")
 
+        # for name, tensor in positives["tokens"].items():
+        #     print(f" positives Name: {name} and Shape of tensor before unpack:{tensor.shape}")
         # If multiple anchors were sampled, we need to unpack them.
         anchors = unpack_batch(anchors)       
         # Mask anchor input ids and get labels required for MLM.
@@ -143,26 +145,30 @@ class DeCLUTR(Model):
             # TODO: We should throw a ValueError if no postives provided but loss is not None.
             if self._loss is not None:
                 # Like the anchors, if we sampled multiple positives, we need to unpack them.
-                positives = unpack_batch(positives)
+                positives = unpack_batch(positives)                
                 # Positives are represented by their mean embedding a la
                 # https://arxiv.org/abs/1902.09229.
                 _, embedded_positives = self._forward_internal(positives)
-                # Shape: (num_anchors, num_positives_per_anchor, embedding_dim)
+                # Shape: (num_anchors, num_positives_per_anchor, embedding_dim) - actually its ((batch_size*num_anchors)*num_positives_per_anchor), embedding_dimension)
+                # print(f"shape of embedded positives before reshape: {embedded_positives.shape}")
                 embedded_positives = torch.reshape(
                     embedded_positives,
                     (embedded_anchors.size(0), -1, embedded_anchors.size(-1)),
                 )
-                # Shape: (num_anchors, embedding_dim)
+                # print(f"shape of embedded positives after reshape: {embedded_positives.shape}")
+                # Shape: (num_anchors, embedding_dim) - actually its (batch_size*num_anchors, num_positives_per_anchor, embedding_dimension)
                 embedded_positives = torch.mean(embedded_positives, dim=1)
-
+                # print(f"Shape of embedded positives after mean: {embedded_positives.shape}")
                 # If we are training on multiple GPUs using DistributedDataParallel, then a naive
                 # application would result in 2 * (batch_size/n_gpus - 1) number of negatives per
                 # GPU. To avoid this, we need to gather the anchors/positives from each replica on
                 # every other replica in order to generate the correct number of negatives,
                 # i.e. 2 * (batch_size - 1), before computing the contrastive loss.
+                # print(f"Anchors shape before gather: {embedded_anchors.shape} and positive: {embedded_positives.shape}")
                 embedded_anchors, embedded_positives = all_gather_anchor_positive_pairs(
                     embedded_anchors, embedded_positives
                 )
+                # print(f"Anchors shape after gather: {embedded_anchors.shape} and positive: {embedded_positives.shape}")
                 # Get embeddings into the format that the PyTorch Metric Learning library expects
                 # before computing the loss (with an optional mining step).
                 embeddings, labels = self._loss.get_embeddings_and_labels(

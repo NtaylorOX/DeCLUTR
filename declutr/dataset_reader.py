@@ -72,6 +72,8 @@ class DeCLUTRDatasetReader(DatasetReader):
         super().__init__(**kwargs)
         self._tokenizer = tokenizer or SpacyTokenizer()
         self._token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
+        
+        self.manual_multi_process_sharding = True
 
         # If the user provided us with a number of anchors to sample, we automatically
         # check that the other expected values are provided and valid.

@@ -133,12 +133,12 @@ if __name__ == "__main__":
 
     # Required parameters
     parser.add_argument("--input_filepath",
-                        default = "E:/working_incident_data/cleaned_data/training_all_text_100000.txt",
+                        default = "E:/working_incident_data/cleaned_data/training_all_text.txt",
                         type=str,
                         help = "The data path to the file containing the saved model etc")
     
     parser.add_argument("--save_directory",
-                        default = "E:/working_incident_data/cleaned_data/declutr_lm/train.txt",
+                        default = "E:/working_incident_data/cleaned_data/declutr_lm/",
                         type=str,
                         help = "The data path to the file containing the saved model etc")
     parser.add_argument("--segment_sentences",
@@ -146,13 +146,17 @@ if __name__ == "__main__":
                         type=bool,
                         help = "Whether to segment the documents into sentences using spaCy")
     parser.add_argument("--min_length",
-                        default = 32,
+                        default = None,
                         type=int,
-                        help = "The minimum number of tokens a document should have to be kept")
-    parser.add_argument("--max_length",
-                        default = 50,
+                        help = "The minimum number of tokens a document should have to be kept. If none will be calculated based on num_anchors * max_span_len * 2")
+    parser.add_argument("--max_span_length",
+                        default = 128,
                         type=int,
-                        help = "The max number of tokens a document should have to be kept")  
+                        help = "The max number of tokens a document should have to be kept")
+    parser.add_argument("--num_anchors",
+                        default = 1,
+                        type=int,
+                        help = "The number of anchors to create per document")     
     parser.add_argument("--max_instances",
                         default = None,
                         type=int,
@@ -164,12 +168,28 @@ if __name__ == "__main__":
         
     
     # create args object
-    args = parser.parse_args()
+    args = parser.parse_args()    
+            
+    # update save_dir based on the min_length
+    # remember it is recommended by the original authors that min_length = num_anchors * max_span_len * 2
+    # the wiki dataset had much longer documents - so we may just use one anchor for now with max_span_len of 128
     
-    # now run
+    if not args.min_length:
+        typer.secho(f"Calculating minimum span length", bold=True)
+        min_length = args.num_anchors * args.max_span_length * 2
+    else:
+        min_length = args.min_length
+    
+    
+    typer.secho(f"minimum length is: {min_length}", bold=True)
+    
+    # update the output directory based on the min_length and num_anchors
+    output_filepath = f"{args.save_directory}/min_{min_length}/train.txt"
+    
+    # now run with arguments required by main
     main(input_filepath=args.input_filepath,
-            output_filepath = args.save_directory,
+            output_filepath = output_filepath, # NOTE this is not based on the provided args
             segment_sentences= args.segment_sentences,
-            min_length = args.min_length,
-            max_instances= args.max_instances,
+            min_length = min_length, # NOTE this is not based on the provided args
+            max_instances = args.max_instances,                        
             pretrained_model_name_or_path = args.pretrained_model_name_or_path)
