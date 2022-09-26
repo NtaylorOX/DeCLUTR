@@ -176,7 +176,7 @@ class DeCLUTRDatasetReader(DatasetReader):
 
         fields: Dict[str, Field] = {}
         if self.sample_spans:
-            if isinstance(self._tokenizer, PretrainedTransformerTokenizer):
+            if isinstance(self._tokenizer, PretrainedTransformerTokenizer):                
                 # We add a space in front of the text in order to achieve consistant tokenization with
                 # certain tokenizers, e.g. the BPE tokenizer used by RoBERTa, GPT and others.
                 # See: https://github.com/huggingface/transformers/issues/1196

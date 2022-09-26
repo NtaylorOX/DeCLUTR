@@ -61,7 +61,7 @@ def main(
             # Import transformers here to prevent ImportError errors if the
             # user doesn't want to use it.
             from transformers import AutoTokenizer
-
+            typer.secho(f"Will be tokenizing with: {pretrained_model_name_or_path}")
             tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path).tokenize
         else:
             tokenizer = lambda x: x.split()  # noqa
@@ -106,11 +106,16 @@ def main(
                 # Retain documents if the length of their shortest document is
                 # equal to or greater than the minimum specified length
                 if tokenizer is not None:
+                    # We add a space in front of the text in order to achieve consistant tokenization with
+                    # certain tokenizers, e.g. the BPE tokenizer used by RoBERTa, GPT and others.
+                    # See: https://github.com/huggingface/transformers/issues/1196
+                    if pretrained_model_name_or_path is not None:
+                        doc = f" {doc.lstrip()}"
                     num_tokens = len(tokenizer(doc))
                     # print(f"num tokens:{num_tokens}")
                     
                 
-                    if min_length and num_tokens < min_length:
+                    if min_length and num_tokens < min_length:                        
                         continue
 
                 if max_instances and len(preprocessed_documents) >= max_instances:
@@ -133,7 +138,7 @@ if __name__ == "__main__":
 
     # Required parameters
     parser.add_argument("--input_filepath",
-                        default = "E:/working_incident_data/cleaned_data/training_all_text.txt",
+                        default = "E:/working_incident_data/cleaned_data/training_all_text_250000.txt",
                         type=str,
                         help = "The data path to the file containing the saved model etc")
     
@@ -162,7 +167,7 @@ if __name__ == "__main__":
                         type=int,
                         help = "The total maximum of documents to keep")
     parser.add_argument("--pretrained_model_name_or_path",
-                        default = None,
+                        default = "roberta-base", # if None will do str.split()
                         type=str,
                         help = "The name of HF model")
         
@@ -174,17 +179,19 @@ if __name__ == "__main__":
     # remember it is recommended by the original authors that min_length = num_anchors * max_span_len * 2
     # the wiki dataset had much longer documents - so we may just use one anchor for now with max_span_len of 128
     
-    if not args.min_length:
-        typer.secho(f"Calculating minimum span length", bold=True)
-        min_length = args.num_anchors * args.max_span_length * 2
-    else:
-        min_length = args.min_length
+
+    min_length = args.min_length # should be one of 16/32/64/128/256/512/1024/2048
     
     
     typer.secho(f"minimum length is: {min_length}", bold=True)
     
-    # update the output directory based on the min_length and num_anchors
-    output_filepath = f"{args.save_directory}/min_{min_length}/train.txt"
+    if args.max_instances:
+        output_filepath = f"{args.save_directory}/sample_{args.max_instances}/min_{min_length}/train.txt"
+        
+    else:           
+        
+        # update the output directory based on the min_length and num_anchors
+        output_filepath = f"{args.save_directory}/min_{min_length}/train.txt"
     
     # now run with arguments required by main
     main(input_filepath=args.input_filepath,
