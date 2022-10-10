@@ -180,23 +180,34 @@ if __name__ == "__main__":
     # the wiki dataset had much longer documents - so we may just use one anchor for now with max_span_len of 128
     
 
-    min_length = args.min_length # should be one of 16/32/64/128/256/512/1024/2048
+    # args.min_length # should be one of 16/32/64/128/256/512/1024/2048
+    
+
+    # change save directory based on whether roberta-base or sci-bert was used to tokenizer. 
+    #NOTE THIS IS SUPER CRUDE AND SHOULD BE UPDATED TO BE MUCH MORE ROBUST/DYNAYMIC BASED ON MODEL NAME
+    
+    if "sci-base" in args.pretrained_model_name_or_path:
+        typer.secho(f"Got bert-sci-base model with a special tokenizer!")
+        args.save_directory = f"{args.save_directory}/bert-sci-base/"
     
     
-    typer.secho(f"minimum length is: {min_length}", bold=True)
+    typer.secho(f"minimum length is: {args.min_length}", bold=True)
     
     if args.max_instances:
-        output_filepath = f"{args.save_directory}/sample_{args.max_instances}/min_{min_length}/train.txt"
+        output_filepath = f"{args.save_directory}/sample_{args.max_instances}/min_{args.min_length}/train.txt"
         
     else:           
         
         # update the output directory based on the min_length and num_anchors
-        output_filepath = f"{args.save_directory}/min_{min_length}/train.txt"
+        output_filepath = f"{args.save_directory}/min_{args.min_length}/train.txt"
+        
+        
+
     
     # now run with arguments required by main
     main(input_filepath=args.input_filepath,
             output_filepath = output_filepath, # NOTE this is not based on the provided args
             segment_sentences= args.segment_sentences,
-            min_length = min_length, # NOTE this is not based on the provided args
+            min_length = args.min_length, 
             max_instances = args.max_instances,                        
             pretrained_model_name_or_path = args.pretrained_model_name_or_path)

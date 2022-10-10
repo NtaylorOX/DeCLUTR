@@ -35,8 +35,6 @@ python ./scripts/save_pretrained_hf.py --archive_file E:/saved_models/declutr/in
 
 
 
-
-
 ### run 10k sample runs ####
 # run roberta-base with min 128 span| 1 anchor | 2 positives 
 allennlp train .\experiment_configs\roberta-base\declutr_base_incident_1_anch_2_pos_min_128_10ksample.jsonnet --serialization-dir E:/saved_models/declutr/incident/roberta-base/10k_sample/declutr_base_incident_1_anch_2_pos_min_128 --include-package "declutr" -f
