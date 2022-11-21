@@ -1,3 +1,4 @@
+#NOTE this has a subtle change on line #166 that has not been tested
 import logging
 import math
 from typing import Any, Dict, Optional, Tuple, Union
@@ -153,18 +154,21 @@ class PretrainedTransformerEmbedder(TokenEmbedder):
         self.train_parameters = train_parameters
         if not train_parameters:
             for param in self.transformer_model.parameters():
-                param.requires_grad = False
-
+                param.requires_grad = False        
         self.eval_mode = eval_mode
         if eval_mode:
             self.transformer_model.eval()
-
+        
     def train(self, mode: bool = True):
+        
         self.training = mode
         for name, module in self.named_children():
-            if self.eval_mode and name == "transformer_model":
-                module.eval()
-            else:
+            try: # janky fix for the class not having eval mode set
+                if self.eval_mode and name == "transformer_model":
+                    module.eval()
+                else:
+                    module.train(mode)
+            except:
                 module.train(mode)
         return self
 
