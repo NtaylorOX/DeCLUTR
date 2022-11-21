@@ -29,7 +29,7 @@ local min_length = 32;
             },
         },
     }, 
-    "train_data_path": null,
+    "train_data_path": "/mnt/sdg/niallt/wiki_text/wikitext-103/train.txt",
     "model": {
         "type": "declutr",
         "text_field_embedder": {
