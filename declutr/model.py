@@ -67,17 +67,21 @@ class DeCLUTR(Model):
 
         super().__init__(vocab, **kwargs)
         self._text_field_embedder = text_field_embedder
+        
+        # print(f"Text field embedder is : {self._text_field_embedder}")
         # Prevents the user from having to specify the tokenizer / masked language modeling
         # objective. In the future it would be great to come up with something more elegant.
         token_embedder = self._text_field_embedder._token_embedders["tokens"]
+        # print(f"Token embedder is: {token_embedder}")
         self._masked_language_modeling = token_embedder.masked_language_modeling
         if self._masked_language_modeling:
             self._tokenizer = token_embedder.tokenizer
-
+            # print(f"self tokenizer is: {self._tokenizer}")
         # Default to mean BOW pooler. This performs well and so it serves as a sensible default.
         self._seq2vec_encoder = seq2vec_encoder or BagOfEmbeddingsEncoder(
             text_field_embedder.get_output_dim(), averaged=True
         )
+        
         self._feedforward = feedforward
 
         self._miner = miner
@@ -130,6 +134,7 @@ class DeCLUTR(Model):
         # Mask anchor input ids and get labels required for MLM.
         if self.training and self._masked_language_modeling:
             anchors = mask_tokens(anchors, self._tokenizer)
+            
         # This is the textual representation learned by a model and used for downstream tasks.
         masked_lm_loss, embedded_anchors = self._forward_internal(anchors, output_dict)
 
@@ -142,7 +147,7 @@ class DeCLUTR(Model):
                 positives = unpack_batch(positives)
                 # Positives are represented by their mean embedding a la
                 # https://arxiv.org/abs/1902.09229.
-                _, embedded_positives = self._forward_internal(positives)
+                _, embedded_positives = self._forward_internal(positives) # loss from this is not used
                 # Shape: (num_anchors, num_positives_per_anchor, embedding_dim)
                 embedded_positives = torch.reshape(
                     embedded_positives,
@@ -164,7 +169,7 @@ class DeCLUTR(Model):
                 embeddings, labels = self._loss.get_embeddings_and_labels(
                     embedded_anchors, embedded_positives
                 )
-                print(f"embeddings shape after getting embeds and labels: {embeddings.shape} and labels:{labels} with shape: {labels.shape}")
+                # print(f"embeddings shape after getting embeds and labels: {embeddings.shape} and labels:{labels} with shape: {labels.shape}")
                 indices_tuple = self._miner(embeddings, labels) if self._miner is not None else None
                 contrastive_loss = self._loss(embeddings, labels, indices_tuple)
                 # Loss needs to be scaled by world size when using DistributedDataParallel
@@ -183,10 +188,11 @@ class DeCLUTR(Model):
         tokens: TextFieldTensors,
         output_dict: Optional[Dict[str, torch.Tensor]] = None,
     ) -> torch.Tensor:
-
+        # print(f"Tokens shape in forward internal: {tokens['tokens']['token_ids'].shape}")
         masked_lm_loss, embedded_text = self._text_field_embedder(tokens)
+        # print(f"Embedded text from forward internal shape: {embedded_text.shape}")
         mask = get_text_field_mask(tokens).float()
-
+        # print(f"mask inside forward internal is : {mask} of shape :{mask.shape}")
         embedded_text = self._seq2vec_encoder(embedded_text, mask=mask)
         # Don't hold on to embeddings or projections during training.
         if output_dict is not None and not self.training:

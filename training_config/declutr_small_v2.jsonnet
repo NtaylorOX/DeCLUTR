@@ -3,7 +3,9 @@
 local transformer_model = "distilroberta-base";
 
 // This will be used to set the max/min # of tokens in the positive and negative examples.
-local max_length = 512;
+// local max_length = 512;
+// local min_length = 32;
+local max_length = 64;
 local min_length = 32;
 
 {
@@ -12,8 +14,8 @@ local min_length = 32;
     },
     "dataset_reader": {
         "type": "declutr",        
-        "num_anchors": 2,
-        "num_positives": 2,
+        "num_anchors": 1,
+        "num_positives": 1,
         "max_span_len": max_length,
         "min_span_len": min_length,
         "tokenizer": {
@@ -55,12 +57,13 @@ local min_length = 32;
     },
     "data_loader": {
         "batch_size": 4,
-        "num_workers": 1,
+        "num_workers": 0,
         "drop_last": true,
     },
     "trainer": {
         // Set use_amp to true to use automatic mixed-precision during training (if your GPU supports it)
         "use_amp": true,
+        "cuda_device":6,
         "optimizer": {
             "type": "huggingface_adamw",
             "lr": 5e-5,
@@ -72,10 +75,11 @@ local min_length = 32;
                 [["bias", "LayerNorm\\.weight", "layer_norm\\.weight"], {"weight_decay": 0}],
             ],
         },
-        "num_epochs": 1,
+        "callbacks":[{"type":'tensorboard'}],
+        "num_epochs": 10,
         "checkpointer": {
             // A value of null or -1 will save the weights of the model at the end of every epoch
-            "keep_most_recent_by_count": 1,
+            "keep_most_recent_by_count": 2,
         },
         "grad_norm": 1.0,
         "learning_rate_scheduler": {

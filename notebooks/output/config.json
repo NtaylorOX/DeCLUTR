@@ -38,7 +38,7 @@
     "train_data_path": "/mnt/sdg/niallt/wiki_text/wikitext-103/train.txt",
     "trainer": {
         "checkpointer": {
-            "num_serialized_models_to_keep": -1
+            "keep_most_recent_by_count": 1
         },
         "grad_norm": 1,
         "learning_rate_scheduler": {

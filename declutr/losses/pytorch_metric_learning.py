@@ -45,7 +45,7 @@ class PyTorchMetricLearningLoss(Registrable):
         """
         embeddings = torch.cat((anchors, positives))
         
-        print(f"embeddings inside loss: {embeddings.shape}")
+        # print(f"embeddings inside loss: {embeddings.shape}")
         # When using CrossBatchMemory, labels persist across batches so they need to be unique.
         # By choosing a random integer in (0, sys.maxsize) we can be reasonably sure of this.
         # Obviously, there are better (i.e. deterministic ways to do this), but I don't have

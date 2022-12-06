@@ -1,3 +1,13 @@
+# IMPORTANT NOTES FOR CONVERTING TO ALLENNLP V2
+This repo has a couple of changes to allow the old declutr/allennlp code to work with updated allennlp package. Also I have edited the requirements for each to allow easier installation aand avoid issues with `jsonnet` package. 
+
+instead install https://pypi.org/project/jsonnet-binary/ via ```pip install jsonnet-binary```
+
+
+
+
+
+
 # DeCLUTR: Deep Contrastive Learning for Unsupervised Textual Representations
 
 ![build](https://github.com/JohnGiorgi/declutr/workflows/build/badge.svg?branch=master)
